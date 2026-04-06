@@ -70,3 +70,39 @@ fn prefer_block_scalars_folded_for_long_single_line() {
     let back: String = serde_saphyr::from_str(&out).unwrap();
     assert_eq!(back, long);
 }
+
+#[test]
+fn prefer_block_scalars_literal_for_multiline_not_plain_safe() {
+    // Even if the content would not be plain-safe after newline normalization,
+    // multiline values should still prefer literal block style when enabled.
+    let opts = serde_saphyr::ser_options! { prefer_block_scalars: true };
+    let input = "key: value\nnext";
+
+    let out = serde_saphyr::to_string_with_options(&input, opts).unwrap();
+    assert!(
+        out.starts_with("|-\n  key: value\n  next\n"),
+        "expected literal block scalar for multiline non-plain-safe value: {out}"
+    );
+
+    let back: String = serde_saphyr::from_str(&out).unwrap();
+    assert_eq!(back, input);
+}
+
+#[test]
+fn prefer_block_scalars_multiline_with_controls_stays_quoted() {
+    let opts = serde_saphyr::ser_options! { prefer_block_scalars: true };
+    let input = "line1\nline2\u{1b}";
+
+    let out = serde_saphyr::to_string_with_options(&input, opts).unwrap();
+    assert!(
+        out.starts_with('"'),
+        "expected quoted style for control-char content: {out}"
+    );
+    assert!(
+        out.contains("\\n"),
+        "expected escaped newline in quoted output: {out}"
+    );
+
+    let back: String = serde_saphyr::from_str(&out).unwrap();
+    assert_eq!(back, input);
+}

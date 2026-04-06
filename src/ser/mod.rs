@@ -47,12 +47,12 @@ use std::fmt::{self, Write};
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
+use self::options::{CommentPosition, FOLDED_WRAP_CHARS, MIN_FOLD_CHARS, SerializerOptions};
 use crate::long_strings::{NAME_FOLD_STR, NAME_LIT_STR};
 use crate::{
-    ArcAnchor, ArcRecursion, ArcRecursive, ArcWeakAnchor, Commented, FlowMap, FlowSeq,
-    RcAnchor, RcRecursion, RcRecursive, RcWeakAnchor, SpaceAfter,
+    ArcAnchor, ArcRecursion, ArcRecursive, ArcWeakAnchor, Commented, FlowMap, FlowSeq, RcAnchor,
+    RcRecursion, RcRecursive, RcWeakAnchor, SpaceAfter,
 };
-use self::options::{CommentPosition, FOLDED_WRAP_CHARS, MIN_FOLD_CHARS, SerializerOptions};
 use base64::{Engine as _, engine::general_purpose::STANDARD as B64};
 use nohash_hasher::BuildNoHashHasher;
 
@@ -441,6 +441,16 @@ impl<'a, W: Write> YamlSerializer<'a, W> {
             c == '\''       // single quote present - cannot use single-quoted style
                 || c == '\\' // backslash - needs escape processing
                 || c.is_control() // control chars (includes \n, \t, \r, etc.) need escaping
+        })
+    }
+
+    /// Returns true if multiline auto-literal style should be avoided and quoted
+    /// escaping should be preferred for compatibility.
+    #[inline]
+    fn has_escape_sensitive_non_newline_chars(s: &str) -> bool {
+        s.chars().any(|c| {
+            matches!(c, '\u{2028}' | '\u{2029}' | '\u{FEFF}')
+                || (c.is_control() && c != '\n' && c != '\t')
         })
     }
 
@@ -905,9 +915,8 @@ impl<'a, 'b, W: Write> Serializer for &'a mut YamlSerializer<'b, W> {
         // If no explicit style pending, auto-select block style.
         //
         // Controlled by `prefer_block_scalars`:
-        //  - multiline + long (by folded_wrap_col) → literal (|)
-        //  - otherwise, multiline → literal (|) only when newlines are the only reason plain
-        //    style is unsafe
+        //  - multiline text → literal (|), unless it contains escape-sensitive
+        //    non-newline characters (keep quoted style for compatibility)
         //  - single-line + long (by folded_wrap_col) → folded (>)
         //
         // Also skip block scalars when quote_all is enabled - use quoted strings instead.
@@ -915,23 +924,11 @@ impl<'a, 'b, W: Write> Serializer for &'a mut YamlSerializer<'b, W> {
             use self::quoting::is_plain_value_safe;
 
             if v.contains('\n') {
-                if self.prefer_block_scalars {
-                    // If it's already multiline and long, emit literal block style for readability.
-                    let char_len = v.chars().count();
-                    if char_len > self.folded_wrap_col {
-                        self.pending_str_style = Some(StrStyle::Literal);
-                        self.pending_str_from_auto = true;
-                    } else {
-                        // If removing newlines makes it plain-safe, then the only problem was
-                        // newlines → allow literal block style. Otherwise, don't auto-select block
-                        // style so that quoting logic handles it (e.g., values ending with ':').
-                        let trimmed = v.trim_end_matches('\n');
-                        let normalized = trimmed.replace('\n', " ");
-                        if is_plain_value_safe(&normalized, self.yaml_12, false) {
-                            self.pending_str_style = Some(StrStyle::Literal);
-                            self.pending_str_from_auto = true;
-                        }
-                    }
+                if self.prefer_block_scalars
+                    && !YamlSerializer::<'b, W>::has_escape_sensitive_non_newline_chars(v)
+                {
+                    self.pending_str_style = Some(StrStyle::Literal);
+                    self.pending_str_from_auto = true;
                 }
             } else if self.prefer_block_scalars {
                 // Single-line string. If it needs quoting as a value, don't auto-fold.
