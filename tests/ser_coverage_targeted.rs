@@ -46,7 +46,7 @@ fn quote_all_mode_single_quotes_plain_strings() {
 }
 
 #[test]
-fn quote_all_mode_double_quotes_special_strings() {
+fn quote_all_mode_backslash_uses_single_quotes() {
     let opts = serde_saphyr::ser_options! {
         quote_all: true,
     };
@@ -891,7 +891,7 @@ fn write_quoted_named_escapes_in_value() {
     let s = "x\\\u{2028}y";
     let yaml = to_string_with_options(&s, opts).unwrap();
     assert!(yaml.contains("\\L"), "expected \\L for LS: {yaml}");
-    let s = "x\\\u{2029}y";
+    let s = "x'\u{2029}y";
     let yaml = to_string_with_options(&s, opts).unwrap();
     assert!(yaml.contains("\\P"), "expected \\P for PS: {yaml}");
     // BOM \u{FEFF} -> \uFEFF
