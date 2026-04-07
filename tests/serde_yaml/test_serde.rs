@@ -301,11 +301,11 @@ fn test_strings_needing_quote() {
         leading_zeros: "07".to_owned(),
         ok: "OK".to_owned(), // does not need quote
     };
-    let yaml = r#"boolean: "true"
-integer: "1"
-void: "null"
-xnan: "NaN"
-leading_zeros: "07"
+    let yaml = r#"boolean: 'true'
+integer: '1'
+void: 'null'
+xnan: 'NaN'
+leading_zeros: '07'
 ok: OK
 "#;
     test_serde(&thing, yaml);

@@ -104,19 +104,15 @@ fn over_long_key_with_tuple_variant_value() {
 #[test]
 fn enum_variant_mapping_keys_quote_yaml11_boolean_spellings() {
     let cases = [
-        (
-            BoolishVariant::Newtype(1),
-            "\"yes\": 1\n",
-            "newtype variant",
-        ),
+        (BoolishVariant::Newtype(1), "'yes': 1\n", "newtype variant"),
         (
             BoolishVariant::Tuple(1, 2),
-            "\"no\":\n  - 1\n  - 2\n",
+            "'no':\n  - 1\n  - 2\n",
             "tuple variant",
         ),
         (
             BoolishVariant::Struct { value: 1 },
-            "\"on\":\n  value: 1\n",
+            "'on':\n  value: 1\n",
             "struct variant",
         ),
     ];
@@ -201,7 +197,7 @@ fn numeric_string_keys_roundtrip() {
         huge_float_exp.as_str(),
     ] {
         assert!(
-            yaml.contains(&format!("\"{value}\"")),
+            yaml.contains(&format!("'{value}':")) || yaml.contains(&format!("\"{value}\":")),
             "Key '{}' should be quoted in YAML output, got:\n{}",
             value,
             yaml

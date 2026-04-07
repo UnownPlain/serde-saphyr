@@ -25,7 +25,7 @@ fn document_marker_strings_are_quoted_at_top_level() {
     for value in ["---", "...", "--- value", "... value"] {
         let serialized = serde_saphyr::to_string(&value).unwrap();
 
-        assert_eq!(serialized, format!("\"{value}\"\n"));
+        assert_eq!(serialized, format!("'{value}'\n"));
 
         let decoded: String = serde_saphyr::from_str(&serialized).unwrap();
         assert_eq!(decoded, value);
@@ -39,7 +39,7 @@ fn document_marker_strings_are_quoted_in_multiple_documents() {
 
     assert_eq!(
         serialized,
-        "first\n---\n\"---\"\n---\n\"...\"\n---\n\"--- value\"\n---\n\"... value\"\n"
+        "first\n---\n'---'\n---\n'...'\n---\n'--- value'\n---\n'... value'\n"
     );
 
     let decoded: Vec<String> = serde_saphyr::from_multiple(&serialized).unwrap();

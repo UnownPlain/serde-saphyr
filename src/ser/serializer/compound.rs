@@ -479,7 +479,7 @@ impl<W: Write> SerializeMap for MapSer<'_, '_, W> {
             if !self.first {
                 self.ser.out.write_str(", ")?;
             }
-            let text = scalar_key_to_string(key, self.ser.yaml_12)?;
+            let text = scalar_key_to_string(key, self.ser.yaml_12, self.ser.quote_style)?;
             if is_simple_key_text(&text) {
                 self.ser.out.write_str(&text)?;
                 self.ser.out.write_str(": ")?;
@@ -511,7 +511,7 @@ impl<W: Write> SerializeMap for MapSer<'_, '_, W> {
             self.ser.pending_inline_map = false;
             self.ser.last_value_was_block = false;
 
-            match scalar_key_to_string(key, self.ser.yaml_12) {
+            match scalar_key_to_string(key, self.ser.yaml_12, self.ser.quote_style) {
                 Ok(text) if is_simple_key_text(&text) => {
                     self.write_simple_key(&text)?;
                 }
@@ -641,7 +641,7 @@ impl<W: Write> SerializeStructVariant for StructVariantSer<'_, '_, W> {
         key: &'static str,
         value: &T,
     ) -> Result<()> {
-        let text = scalar_key_to_string(&key, self.ser.yaml_12)?;
+        let text = scalar_key_to_string(&key, self.ser.yaml_12, self.ser.quote_style)?;
         self.ser.write_indent(self.depth)?;
         self.ser.out.write_str(&text)?;
         // Defer spacing/newline decision to the value serializer similarly to map entries.

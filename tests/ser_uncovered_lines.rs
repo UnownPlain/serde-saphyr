@@ -219,7 +219,7 @@ fn map_key_with_control_char() {
     m.insert("a\x01b".to_string(), 1);
     let yaml = to_string(&m).unwrap();
     // Key should be double-quoted with escape
-    assert!(yaml.contains("\\x01"), "Expected escape in key: {}", yaml);
+    assert!(yaml.contains("\\u0001"), "Expected escape in key: {}", yaml);
 }
 
 // ~725: The \u{:04X} branch in write_quoted is dead code.

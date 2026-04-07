@@ -14,7 +14,7 @@ pub use self::de_error::ValidationSource;
 #[cfg(feature = "serialize")]
 pub use self::ser::{
     error as ser_error,
-    options::{CommentPosition, SerializerOptions},
+    options::{CommentPosition, QuoteStyle, SerializerOptions},
 };
 #[cfg(feature = "deserialize")]
 pub use self::{

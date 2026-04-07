@@ -13,7 +13,9 @@ use std::fmt::Write;
 
 use crate::long_strings::{NAME_FOLD_STR, NAME_LIT_STR};
 
-use super::options::{CommentPosition, FOLDED_WRAP_CHARS, MIN_FOLD_CHARS, SerializerOptions};
+use super::options::{
+    CommentPosition, FOLDED_WRAP_CHARS, MIN_FOLD_CHARS, QuoteStyle, SerializerOptions,
+};
 use super::quoting::{
     escape_double_quoted, is_auto_block_scalar_readable, is_block_scalar_content_safe,
     is_controll_which_needs_escaping, is_plain_value_safe,
@@ -133,9 +135,11 @@ pub struct YamlSerializer<'a, W: Write> {
     after_dash_depth: Option<usize>,
     /// Current block map indentation depth (for aligning sequences under a map key).
     current_map_depth: Option<usize>,
-    /// If true, quote all string scalars. Uses single quotes by default, but switches to
-    /// double quotes when the string contains escape sequences or single quotes.
+    /// If true, quote all string scalars.
     quote_all: bool,
+    /// Preferred quote style. Uses single quotes by default, switches to
+    /// double quotes when the string contains control characters or single quotes.
+    quote_style: QuoteStyle,
 
     /// When enabled, emit YAML 1.2 directive and use YAML 1.2-friendly heuristics.
     yaml_12: bool,
@@ -176,6 +180,7 @@ impl<'a, W: Write> YamlSerializer<'a, W> {
             after_dash_depth: None,
             current_map_depth: None,
             quote_all: false,
+            quote_style: QuoteStyle::Single,
             yaml_12: false,
             doc_started: false,
         }
@@ -201,6 +206,7 @@ impl<'a, W: Write> YamlSerializer<'a, W> {
         s.compact_list_indent = options.compact_list_indent;
         s.prefer_block_scalars = options.prefer_block_scalars;
         s.quote_all = options.quote_all;
+        s.quote_style = options.quote_style;
         s.comment_position = options.comment_position;
         s.yaml_12 = options.yaml_12;
         s
@@ -209,13 +215,12 @@ impl<'a, W: Write> YamlSerializer<'a, W> {
     // -------- helpers --------
 
     /// Determines if a string requires double quotes when `quote_all` is enabled.
-    /// Returns true if the string contains single quotes, backslashes, or control characters
+    /// Returns true if the string contains single quotes or control characters
     /// that need escape processing.
     #[inline]
     fn needs_double_quotes(s: &str) -> bool {
         s.chars().any(|c| {
             c == '\''       // single quote present - cannot use single-quoted style
-                || c == '\\' // backslash - needs escape processing
                 || is_controll_which_needs_escaping(c) // control chars (includes \n, \t, \r, etc.) need escaping
         })
     }
@@ -232,6 +237,21 @@ impl<'a, W: Write> YamlSerializer<'a, W> {
         }
         self.out.write_char('\'')?;
         Ok(())
+    }
+
+    /// Write a quoted string using the configured quote-style preference.
+    #[inline]
+    fn write_preferred_quoted(&mut self, s: &str) -> Result<()> {
+        match self.quote_style {
+            QuoteStyle::Double => self.write_quoted(s),
+            QuoteStyle::Single => {
+                if Self::needs_double_quotes(s) {
+                    self.write_quoted(s)
+                } else {
+                    self.write_single_quoted(s)
+                }
+            }
+        }
     }
 
     /// Append a pending inline comment, if any.
@@ -403,7 +423,7 @@ impl<'a, W: Write> YamlSerializer<'a, W> {
     /// (`Variant: ...`), so they need the same ambiguity checks as regular
     /// map and struct keys.
     fn write_key_scalar(&mut self, s: &str) -> Result<()> {
-        let text = scalar_key_to_string(&s, self.yaml_12)?;
+        let text = scalar_key_to_string(&s, self.yaml_12, self.quote_style)?;
         self.out.write_str(&text)?;
         Ok(())
     }
@@ -420,18 +440,13 @@ impl<'a, W: Write> YamlSerializer<'a, W> {
     #[inline]
     fn write_plain_or_quoted_value(&mut self, s: &str) -> Result<()> {
         if self.quote_all {
-            // In quote_all mode: prefer single quotes, use double quotes when needed
-            if Self::needs_double_quotes(s) {
-                self.write_quoted(s)
-            } else {
-                self.write_single_quoted(s)
-            }
+            self.write_preferred_quoted(s)
         } else if is_plain_value_safe(s, self.yaml_12, self.in_flow > 0) {
             self.out.write_str(s)?;
             Ok(())
         } else {
             // Force quoted style for problematic value tokens (commas/brackets, bool/num-like, etc.).
-            self.write_quoted(s)
+            self.write_preferred_quoted(s)
         }
     }
 
@@ -904,15 +919,14 @@ impl<'a, 'b, W: Write> Serializer for &'a mut YamlSerializer<'b, W> {
         if self.at_line_start {
             self.write_indent(self.depth)?;
         }
-        // Special-case: prefer single-quoted style for select 1-char punctuation to
-        // match expected YAML output in tests ('.', '#', '-').
-        if v.len() == 1
+        // Outside quote_all mode, still quote select 1-char punctuation so the configured
+        // quote style applies consistently for punctuation that is clearer when quoted.
+        if !self.quote_all
+            && v.len() == 1
             && let Some(ch) = v.chars().next()
             && (ch == '.' || ch == '#' || ch == '-')
         {
-            self.out.write_char('\'')?;
-            self.out.write_char(ch)?;
-            self.out.write_char('\'')?;
+            self.write_preferred_quoted(v)?;
             self.write_end_of_scalar()?;
             return Ok(());
         }

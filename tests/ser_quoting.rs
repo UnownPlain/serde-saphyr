@@ -15,13 +15,16 @@ fn quote_all_mode_single_quotes_plain_strings() {
 }
 
 #[test]
-fn quote_all_mode_double_quotes_special_strings() {
+fn quote_all_mode_single_quotes_backslashes() {
     let opts = serde_saphyr::ser_options! {
         quote_all: true,
     };
-    // String with backslash requires double quotes
+    // Backslashes are literal in single-quoted strings.
     let yaml = to_string_with_options(&"back\\slash", opts).unwrap();
-    assert!(yaml.contains('"'), "expected double-quoted: {yaml}");
+    assert!(
+        yaml.contains("'back\\slash'"),
+        "expected single-quoted: {yaml}"
+    );
 }
 
 #[test]
@@ -62,11 +65,11 @@ fn str_key_with_colon_gets_quoted() {
 
 #[test]
 fn write_quoted_null_escape() {
-    // \x00 (NUL) gets \0 escape in double-quoted strings
+    // Key scalar control characters use Unicode escapes.
     let mut m = BTreeMap::new();
     m.insert("key\x00null", "val");
     let yaml = to_string(&m).unwrap();
-    assert!(yaml.contains("\\0"), "expected NUL escape: {yaml}");
+    assert!(yaml.contains("\\u0000"), "expected NUL escape: {yaml}");
 }
 
 #[test]
@@ -121,9 +124,9 @@ fn write_quoted_named_escapes_in_map_keys() {
     m.insert("bom\u{FEFF}mark".to_string(), 3);
 
     let yaml = to_string(&m).unwrap();
-    assert!(yaml.contains("\\L"), "expected \\L for LS: {yaml}");
-    assert!(yaml.contains("\\P"), "expected \\P for PS: {yaml}");
-    assert!(yaml.contains("\\uFEFF"), "expected \\uFEFF for BOM: {yaml}");
+    assert!(yaml.contains('\u{2028}'), "expected LS in key: {yaml}");
+    assert!(yaml.contains('\u{2029}'), "expected PS in key: {yaml}");
+    assert!(yaml.contains('\u{FEFF}'), "expected BOM in key: {yaml}");
 
     let back: BTreeMap<String, i32> = from_str(&yaml).unwrap();
     assert_eq!(back, m);
@@ -131,13 +134,13 @@ fn write_quoted_named_escapes_in_map_keys() {
 
 #[test]
 fn write_quoted_control_char_escapes() {
-    // Control chars in keys force double-quoting and use the same named escapes as values.
+    // Control chars in keys force double-quoting and use Unicode escapes.
     let cases: Vec<(&str, &str)> = vec![
-        ("\x07", "\\a"),
-        ("\x08", "\\b"),
-        ("\x0b", "\\v"),
-        ("\x0c", "\\f"),
-        ("\x1b", "\\e"),
+        ("\x07", "\\u0007"),
+        ("\x08", "\\u0008"),
+        ("\x0b", "\\u000B"),
+        ("\x0c", "\\u000C"),
+        ("\x1b", "\\u001B"),
     ];
     for (input, expected) in cases {
         let mut m = BTreeMap::new();
@@ -267,11 +270,11 @@ fn quote_all_value_position() {
 #[test]
 fn single_quoted_escapes_embedded_quote() {
     let opts = serde_saphyr::ser_options! { quote_all: true };
-    // A string with a backslash needs double quotes
+    // Backslashes remain literal in single-quoted strings.
     let yaml = to_string_with_options(&"back\\slash", opts).unwrap();
     assert!(
-        yaml.starts_with('"'),
-        "expected double quotes for backslash: {yaml}"
+        yaml.starts_with('\''),
+        "expected single quotes for backslash: {yaml}"
     );
 }
 
