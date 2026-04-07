@@ -667,17 +667,14 @@ fn auto_folded_strip_chomp_no_trailing_newline() {
     assert!(yaml.contains(">-"), "expected strip chomp: {yaml}");
 }
 
-// ── Single-quoted string with embedded single quote ──
+// ── Single-quoted string with embedded backslash ──
 
 #[test]
-fn single_quoted_escapes_embedded_quote() {
+fn single_quoted_preserves_embedded_backslash() {
     let opts = serde_saphyr::ser_options! { quote_all: true };
-    // A string with a backslash needs double quotes
+    // Backslash is literal in single-quoted YAML, so it does not force double quotes.
     let yaml = to_string_with_options(&"back\\slash", opts).unwrap();
-    assert!(
-        yaml.starts_with('"'),
-        "expected double quotes for backslash: {yaml}"
-    );
+    assert_eq!(yaml, "'back\\slash'\n");
 }
 
 // ── Struct variant in sequence ──

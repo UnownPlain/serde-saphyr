@@ -50,9 +50,9 @@ fn quote_all_mode_double_quotes_special_strings() {
     let opts = serde_saphyr::ser_options! {
         quote_all: true,
     };
-    // String with backslash requires double quotes
+    // Backslash is literal in single-quoted YAML, so it does not force double quotes.
     let yaml = to_string_with_options(&"back\\slash", opts).unwrap();
-    assert!(yaml.contains('"'), "expected double-quoted: {yaml}");
+    assert_eq!(yaml, "'back\\slash'\n");
 }
 
 #[test]
@@ -887,14 +887,14 @@ fn write_quoted_named_escapes_in_value() {
     let s = "x\u{0085}y";
     let yaml = to_string_with_options(&s, opts).unwrap();
     assert!(yaml.contains("\\N"), "expected \\N for NEL: {yaml}");
-    // LS \u{2028} -> \L, PS \u{2029} -> \P (combine with backslash to force double-quoting)
+    // LS \u{2028} -> \L, PS \u{2029} -> \P
     let s = "x\\\u{2028}y";
     let yaml = to_string_with_options(&s, opts).unwrap();
     assert!(yaml.contains("\\L"), "expected \\L for LS: {yaml}");
     let s = "x\\\u{2029}y";
     let yaml = to_string_with_options(&s, opts).unwrap();
     assert!(yaml.contains("\\P"), "expected \\P for PS: {yaml}");
-    // BOM \u{FEFF} -> \uFEFF (combine with backslash to force double-quoting)
+    // BOM \u{FEFF} -> \uFEFF
     let s = "x\\\u{FEFF}y";
     let yaml = to_string_with_options(&s, opts).unwrap();
     assert!(yaml.contains("\\uFEFF"), "expected \\uFEFF for BOM: {yaml}");
@@ -1253,7 +1253,7 @@ fn struct_variant_serialized() {
     assert!(yaml.contains("Move"), "expected variant name: {yaml}");
     assert!(yaml.contains("x: 10"), "expected first field: {yaml}");
     assert!(
-        yaml.contains("y: 20") || yaml.contains("\"y\": 20"),
+        yaml.contains("y: 20") || yaml.contains("'y': 20") || yaml.contains("\"y\": 20"),
         "expected second field: {yaml}"
     );
 }

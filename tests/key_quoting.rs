@@ -78,7 +78,7 @@ mod tests {
             huge_float_exp.as_str(),
         ] {
             assert!(
-                yaml.contains(&format!("\"{value}\"")),
+                yaml.contains(&format!("'{value}':")) || yaml.contains(&format!("\"{value}\":")),
                 "Key '{}' should be quoted in YAML output, got:\n{}",
                 value,
                 yaml

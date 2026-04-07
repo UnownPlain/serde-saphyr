@@ -421,7 +421,7 @@ impl<'a, 'b, W: Write> SerializeMap for MapSer<'a, 'b, W> {
             if !self.first {
                 self.ser.out.write_str(", ")?;
             }
-            let text = scalar_key_to_string(key, self.ser.yaml_12)?;
+            let text = scalar_key_to_string(key, self.ser.yaml_12, self.ser.quote_style)?;
             self.ser.out.write_str(&text)?;
             self.ser.out.write_str(": ")?;
             self.ser.at_line_start = false;
@@ -447,7 +447,7 @@ impl<'a, 'b, W: Write> SerializeMap for MapSer<'a, 'b, W> {
             self.ser.pending_inline_map = false;
             self.ser.last_value_was_block = false;
 
-            match scalar_key_to_string(key, self.ser.yaml_12) {
+            match scalar_key_to_string(key, self.ser.yaml_12, self.ser.quote_style) {
                 Ok(text) => {
                     // Indent continuation lines. If this map started inline after a dash,
                     // align under the first key by adding two spaces instead of a full indent step.
@@ -621,7 +621,7 @@ impl<'a, 'b, W: Write> SerializeStructVariant for StructVariantSer<'a, 'b, W> {
         key: &'static str,
         value: &T,
     ) -> Result<()> {
-        let text = scalar_key_to_string(&key, self.ser.yaml_12)?;
+        let text = scalar_key_to_string(&key, self.ser.yaml_12, self.ser.quote_style)?;
         self.ser.write_indent(self.depth)?;
         self.ser.out.write_str(&text)?;
         // Defer spacing/newline decision to the value serializer similarly to map entries.

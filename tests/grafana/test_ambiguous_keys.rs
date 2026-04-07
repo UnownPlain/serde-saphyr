@@ -15,12 +15,12 @@ fn test_quote_ambiguous_keys() {
     let mut output = String::new();
     serde_saphyr::to_fmt_writer_with_options(&mut output, &map, options).unwrap();
 
-    assert!(output.contains("\"y\":"), "y should be quoted");
-    assert!(output.contains("\"n\":"), "n should be quoted");
-    assert!(output.contains("\"yes\":"), "yes should be quoted");
-    assert!(output.contains("\"no\":"), "no should be quoted");
+    assert!(output.contains("'y':"), "y should be quoted");
+    assert!(output.contains("'n':"), "n should be quoted");
+    assert!(output.contains("'yes':"), "yes should be quoted");
+    assert!(output.contains("'no':"), "no should be quoted");
     assert!(
-        output.contains("\"0\":"),
+        output.contains("'0':"),
         "number that is a string in key position should be quoted"
     );
     assert!(output.contains("x:"), "x should NOT be quoted");
