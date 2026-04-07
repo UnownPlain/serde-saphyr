@@ -35,10 +35,10 @@ fn test_quote_all_string_with_tab() {
 
 #[test]
 fn test_quote_all_string_with_backslash() {
-    // Strings containing backslashes should use double quotes with escapes
+    // Backslashes do not require escape processing in single-quoted YAML scalars
     let opts = serde_saphyr::ser_options! { quote_all: true };
     let result = serde_saphyr::to_string_with_options(&"path\\to\\file", opts).unwrap();
-    assert_eq!(result, "\"path\\\\to\\\\file\"\n");
+    assert_eq!(result, "'path\\to\\file'\n");
 }
 
 #[test]

@@ -162,9 +162,8 @@ pub struct SerializerOptions {
     /// When enabled, quote all string scalars.
     ///
     /// The preferred quote style is controlled by [`Self::quote_style`].
-    /// With [`QuoteStyle::Single`], strings that contain escape sequences
-    /// (control characters like `\n`, `\t`, `\r`, backslash) or single quotes
-    /// are emitted with double quotes.
+    /// With [`QuoteStyle::Single`], strings that contain control characters or
+    /// a single quote are emitted with double quotes.
     /// Disables block scalar styles (`|` and `>`) for quoted strings when active.
     /// Off by default.
     #[deprecated(
