@@ -50,11 +50,10 @@ fn flowseq_strings_are_quoted_when_needed() -> anyhow::Result<()> {
 
     // Expect all elements to be appropriately quoted/escaped in a flow sequence, with trailing newline.
     let serialized = concat!(
-        r##"["a, [], b", "{", "}", "[", "]", ",", '#', ":", "@", "`", "##,
-        r##""n", "true", "False", "~", "null", "YES", "no", "off", "On", "100", "1e3", "3.14", "##,
-        r##"".nan", "-.inf", " leading", He said "hi", C:\path, "line1\nline2", "##,
-        r##""\tindent", '.', '-']"##,
-        "\n"
+        "['a, [], b', '{', '}', '[', ']', ',', '#', ':', '@', '`', 'n', ",
+        "'true', 'False', '~', 'null', 'YES', 'no', 'off', 'On', '100', ",
+        "'1e3', '3.14', '.nan', '-.inf', ' leading', He said \"hi\", ",
+        "C:\\path, \"line1\\nline2\", \"\\tindent\", '.', '-']\n",
     );
 
     assert_eq!(yaml, serialized, "Unexpected YAML output: {yaml}");
