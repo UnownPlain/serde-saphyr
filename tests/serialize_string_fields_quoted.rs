@@ -8,6 +8,7 @@ struct HasStrings {
     xnan: String,
     colon: String,
     comment: String,
+    inline_hash: String,
     ending_colon: String,
     trim_ending_colon: String,
 }
@@ -19,6 +20,7 @@ fn strings_that_look_special_are_quoted() -> Result<()> {
         xnan: "nan".to_string(),
         colon: "a: b".to_string(),
         comment: "# hi".to_string(),
+        inline_hash: "a#b".to_string(),
         ending_colon: "hi:".to_string(),
         trim_ending_colon: "hey:\n".to_string(),
     };
@@ -30,6 +32,10 @@ fn strings_that_look_special_are_quoted() -> Result<()> {
     assert!(out.contains("zero: '0'"), "'0' must be quoted: {out}");
     assert!(out.contains("xnan: 'nan'"), "'nan' must be quoted: {out}");
     assert!(out.contains("'# hi'"), "comment must be quoted: {out}");
+    assert!(
+        out.contains("inline_hash: a#b"),
+        "inline hash should stay plain: {out}"
+    );
     assert!(
         out.contains("colon: 'a: b'"),
         "'a: b' must be quoted: {out}"

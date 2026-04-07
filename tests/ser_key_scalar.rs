@@ -122,8 +122,8 @@ fn map_keys_support_many_scalar_types_and_escape_when_needed() {
 
     assert!(yaml.contains("plain: 1\n"), "missing plain key: {yaml}");
     assert!(
-        yaml.contains("'a#b': 2\n"),
-        "missing quoted inline '#': {yaml}"
+        yaml.contains("a#b: 2\n"),
+        "missing plain inline '#': {yaml}"
     );
     assert!(
         yaml.contains("'a:b': 2\n"),
