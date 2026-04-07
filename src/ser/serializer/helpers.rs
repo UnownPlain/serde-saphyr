@@ -1,7 +1,10 @@
 use serde_core::ser::{self, Serialize, Serializer};
 use std::fmt::{self, Write};
 
-use super::super::quoting::{escape_double_quoted, is_plain_safe, is_plain_value_safe};
+use super::super::options::QuoteStyle;
+use super::super::quoting::{
+    escape_double_quoted, is_controll_which_needs_escaping, is_plain_safe, is_plain_value_safe,
+};
 use super::super::zmij_format;
 use super::super::{Error, NAME_NULLABLE_TILDE, Result};
 
@@ -474,10 +477,15 @@ impl StrCapture {
 pub(super) fn scalar_key_to_string<K: Serialize + ?Sized>(
     key: &K,
     yaml_12: bool,
+    quote_style: QuoteStyle,
 ) -> Result<String> {
     let mut s = String::new();
     {
-        let mut ks = KeyScalarSink { s: &mut s, yaml_12 };
+        let mut ks = KeyScalarSink {
+            s: &mut s,
+            yaml_12,
+            quote_style,
+        };
         key.serialize(&mut ks)?;
     }
     Ok(s)
@@ -486,6 +494,47 @@ pub(super) fn scalar_key_to_string<K: Serialize + ?Sized>(
 struct KeyScalarSink<'a> {
     s: &'a mut String,
     yaml_12: bool,
+    quote_style: QuoteStyle,
+}
+
+impl KeyScalarSink<'_> {
+    #[inline]
+    fn needs_double_quotes(s: &str) -> bool {
+        s.chars()
+            .any(|ch| ch == '\'' || is_controll_which_needs_escaping(ch))
+    }
+
+    fn push_single_quoted(&mut self, s: &str) {
+        self.s.push('\'');
+        for ch in s.chars() {
+            if ch == '\'' {
+                self.s.push_str("''");
+            } else {
+                self.s.push(ch);
+            }
+        }
+        self.s.push('\'');
+    }
+
+    fn push_double_quoted(&mut self, s: &str) {
+        self.s.push('"');
+        // Writing into a String cannot fail.
+        let _ = escape_double_quoted(s, self.s);
+        self.s.push('"');
+    }
+
+    fn push_preferred_quoted(&mut self, s: &str) {
+        match self.quote_style {
+            QuoteStyle::Double => self.push_double_quoted(s),
+            QuoteStyle::Single => {
+                if Self::needs_double_quotes(s) {
+                    self.push_double_quoted(s);
+                } else {
+                    self.push_single_quoted(s);
+                }
+            }
+        }
+    }
 }
 
 impl<'a> Serializer for &'a mut KeyScalarSink<'a> {
@@ -560,10 +609,7 @@ impl<'a> Serializer for &'a mut KeyScalarSink<'a> {
         if is_plain_safe(v) && is_plain_value_safe(v, self.yaml_12, true) {
             self.s.push_str(v);
         } else {
-            self.s.push('"');
-            // Writing into a String cannot fail.
-            let _ = escape_double_quoted(v, self.s);
-            self.s.push('"');
+            self.push_preferred_quoted(v);
         }
         Ok(())
     }

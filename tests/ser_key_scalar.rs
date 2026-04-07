@@ -109,13 +109,14 @@ impl Serialize for NewtypeVariantKey {
 #[test]
 fn map_keys_support_many_scalar_types_and_escape_when_needed() {
     // String keys that are not safe as plain scalars (e.g. contain ':', newlines, control chars)
-    // should be emitted in double quotes with escapes.
+    // should be emitted with the configured quote style. Control chars still need double quotes.
     let mut m: BTreeMap<String, i32> = BTreeMap::new();
     m.insert("plain".to_string(), 1);
     m.insert("a#b".to_string(), 2);
     m.insert("a:b".to_string(), 2);
-    m.insert("line\nbreak".to_string(), 3);
-    m.insert("\u{1}".to_string(), 4);
+    m.insert("a #b".to_string(), 3);
+    m.insert("line\nbreak".to_string(), 4);
+    m.insert("\u{1}".to_string(), 5);
 
     let yaml = to_string(&m).expect("serialize string-key map");
 
@@ -125,15 +126,19 @@ fn map_keys_support_many_scalar_types_and_escape_when_needed() {
         "missing plain inline '#': {yaml}"
     );
     assert!(
-        yaml.contains("\"a:b\": 2\n"),
+        yaml.contains("'a:b': 2\n"),
         "missing quoted ':' key: {yaml}"
     );
     assert!(
-        yaml.contains("\"line\\nbreak\": 3\n"),
+        yaml.contains("'a #b': 3\n"),
+        "missing quoted comment-like '#': {yaml}"
+    );
+    assert!(
+        yaml.contains("\"line\\nbreak\": 4\n"),
         "missing escaped newline key: {yaml}"
     );
     assert!(
-        yaml.contains("\"\\x01\": 4\n"),
+        yaml.contains("\"\\x01\": 5\n"),
         "missing escaped control-char key: {yaml}"
     );
 }
@@ -511,7 +516,7 @@ fn key_with_carriage_return_gets_escaped() {
 }
 
 #[test]
-fn key_with_control_char_gets_hex_escape() {
+fn key_with_control_char_gets_unicode_escape() {
     let mut m = BTreeMap::new();
     m.insert("key\x01ctrl", "val");
     let yaml = to_string(&m).unwrap();

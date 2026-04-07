@@ -413,7 +413,7 @@ fn tag_selected_non_unit_enum_variants_serialize_as_their_payloads() {
     for (input, expected) in [
         ("!Int 7", "!Int 7\n"),
         ("!Pair [1, true]", "!Pair\n- 1\n- true\n"),
-        ("!Point {x: 2, y: 3}", "!Point\nx: 2\n\"y\": 3\n"),
+        ("!Point {x: 2, y: 3}", "!Point\nx: 2\n'y': 3\n"),
     ] {
         let value: Tagged<Value> = from_str(input).unwrap();
         let yaml = to_string(&value).unwrap();
@@ -439,7 +439,7 @@ fn core_tag_selected_non_unit_enum_variants_serialize_as_their_payloads() {
         ),
         (
             "!!Point {x: 2, y: 3}",
-            "!<tag:yaml.org,2002:Point>\nx: 2\n\"y\": 3\n",
+            "!<tag:yaml.org,2002:Point>\nx: 2\n'y': 3\n",
         ),
     ] {
         let value: Tagged<Value> = from_str(input).unwrap();
@@ -469,11 +469,11 @@ fn bang_prefixed_tag_selected_variants_serialize_as_their_payloads() {
         ),
         (
             "!<tag:yaml.org,2002:!Point> {x: 2, y: 3}",
-            "!<tag:yaml.org,2002:!Point>\nx: 2\n\"y\": 3\n",
+            "!<tag:yaml.org,2002:!Point>\nx: 2\n'y': 3\n",
         ),
         ("!%21Int 7", "!%21Int 7\n"),
         ("!%21Pair [1, true]", "!%21Pair\n- 1\n- true\n"),
-        ("!%21Point {x: 2, y: 3}", "!%21Point\nx: 2\n\"y\": 3\n"),
+        ("!%21Point {x: 2, y: 3}", "!%21Point\nx: 2\n'y': 3\n"),
     ] {
         let value: Tagged<Value> = from_str(input).unwrap();
         let yaml = to_string(&value).unwrap();

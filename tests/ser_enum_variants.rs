@@ -48,7 +48,7 @@ fn struct_variant_serialized() {
     assert!(yaml.contains("Move"), "expected variant name: {yaml}");
     assert!(yaml.contains("x: 10"), "expected first field: {yaml}");
     assert!(
-        yaml.contains("y: 20") || yaml.contains("\"y\": 20"),
+        yaml.contains("y: 20") || yaml.contains("\"y\": 20") || yaml.contains("'y': 20"),
         "expected second field: {yaml}"
     );
 }

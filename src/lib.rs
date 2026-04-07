@@ -21,7 +21,10 @@ pub use self::de_error::{ValidationIssue, ValidationSource};
 #[cfg(all(feature = "serialize", feature = "comments"))]
 pub use self::ser::options::CommentPosition;
 #[cfg(feature = "serialize")]
-pub use self::ser::{Error as SerializeError, error as ser_error, options::SerializerOptions};
+pub use self::ser::{
+    Error as SerializeError, error as ser_error,
+    options::{QuoteStyle, SerializerOptions},
+};
 #[cfg(feature = "deserialize")]
 pub use self::{
     de::{

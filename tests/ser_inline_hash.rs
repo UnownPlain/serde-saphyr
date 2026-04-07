@@ -12,15 +12,15 @@ use serde_saphyr::{FlowMap, FlowSeq, from_str, to_string, to_string_with_options
 #[case::unicode("é#界", "é#界", "é#界")]
 #[case::url(
     "https://example.com/#section",
-    "\"https://example.com/#section\"",
+    "'https://example.com/#section'",
     "https://example.com/#section"
 )]
-#[case::leading("#start", "\"#start\"", "\"#start\"")]
-#[case::space("a #b", "\"a #b\"", "\"a #b\"")]
+#[case::leading("#start", "'#start'", "'#start'")]
+#[case::space("a #b", "'a #b'", "'a #b'")]
 #[case::tab("a\t#b", "\"a\\t#b\"", "\"a\\t#b\"")]
-#[case::later_comment("a#b #c", "\"a#b #c\"", "\"a#b #c\"")]
+#[case::later_comment("a#b #c", "'a#b #c'", "'a#b #c'")]
 // Preserve the conservative policy for Unicode whitespace before a hash.
-#[case::nbsp("a\u{a0}#b", "\"a\u{a0}#b\"", "\"a\u{a0}#b\"")]
+#[case::nbsp("a\u{a0}#b", "'a\u{a0}#b'", "'a\u{a0}#b'")]
 fn hashes_in_maps_and_sequences(
     #[case] input: &str,
     #[case] key: &str,

@@ -67,11 +67,11 @@ fn yaml12_emits_directive_and_does_not_quote_yaml11_boolean_spellings() {
         "n key should not be quoted under yaml_12: {out}"
     );
     assert!(
-        out.contains("\"true\":"),
+        out.contains("'true':"),
         "true is a YAML 1.2 boolean literal and must stay quoted as a string key: {out}"
     );
     assert!(
-        out.contains("\"0\":"),
+        out.contains("'0':"),
         "numeric-looking string key must stay quoted: {out}"
     );
 }
@@ -86,7 +86,7 @@ fn yaml12_disables_auto_quoting_of_yaml11_boolean_spellings_in_values() {
     )
     .unwrap();
     assert!(
-        out_default.contains("k: \"yes\""),
+        out_default.contains("k: 'yes'"),
         "default mode should quote YAML 1.1 boolean spellings in values: {out_default}"
     );
 
@@ -109,7 +109,7 @@ fn yaml12_disables_auto_quoting_of_yaml11_boolean_spellings_in_values() {
         "yaml_12 mode should not quote YAML 1.1 boolean spellings in values: {out_yaml12}"
     );
     assert!(
-        !out_yaml12.contains("k: \"yes\""),
+        !out_yaml12.contains("k: 'yes'"),
         "yaml_12 mode should not quote: {out_yaml12}"
     );
 }
@@ -142,22 +142,14 @@ fn language_directive_option_is_independent_of_string_quoting() {
     let map = BTreeMap::from([("0", "42"), ("true", "false"), ("yes", "on")]);
 
     for (yaml_12, no_lang_directive, expected) in [
-        (
-            false,
-            false,
-            "\"0\": \"42\"\n\"true\": \"false\"\n\"yes\": \"on\"\n",
-        ),
-        (
-            false,
-            true,
-            "\"0\": \"42\"\n\"true\": \"false\"\n\"yes\": \"on\"\n",
-        ),
+        (false, false, "'0': '42'\n'true': 'false'\n'yes': 'on'\n"),
+        (false, true, "'0': '42'\n'true': 'false'\n'yes': 'on'\n"),
         (
             true,
             false,
-            "%YAML 1.2\n---\n\"0\": \"42\"\n\"true\": \"false\"\nyes: on\n",
+            "%YAML 1.2\n---\n'0': '42'\n'true': 'false'\nyes: on\n",
         ),
-        (true, true, "\"0\": \"42\"\n\"true\": \"false\"\nyes: on\n"),
+        (true, true, "'0': '42'\n'true': 'false'\nyes: on\n"),
     ] {
         let options =
             serde_saphyr::ser_options! { yaml_12: yaml_12, no_lang_directive: no_lang_directive };
