@@ -439,15 +439,11 @@ impl<'a, W: Write> YamlSerializer<'a, W> {
     // -------- helpers --------
 
     /// Determines if a string requires double quotes when `quote_all` is enabled.
-    /// Returns true if the string contains single quotes, backslashes, or control characters
+    /// Returns true if the string contains single quotes or control characters
     /// that need escape processing.
     #[inline]
     fn needs_double_quotes(s: &str) -> bool {
-        s.chars().any(|c| {
-            c == '\''       // single quote present - cannot use single-quoted style
-                || c == '\\' // backslash - needs escape processing
-                || c.is_control() // control chars (includes \n, \t, \r, etc.) need escaping
-        })
+        s.chars().any(|c| c == '\'' || c.is_control())
     }
 
     /// Write a single-quoted string. Single quotes inside the string are escaped by doubling them.

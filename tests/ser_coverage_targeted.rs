@@ -46,13 +46,13 @@ fn quote_all_mode_single_quotes_plain_strings() {
 }
 
 #[test]
-fn quote_all_mode_double_quotes_special_strings() {
+fn quote_all_mode_backslash_uses_single_quotes() {
     let opts = serde_saphyr::ser_options! {
         quote_all: true,
     };
-    // String with backslash requires double quotes
+    // Backslashes are preserved in single-quoted scalars.
     let yaml = to_string_with_options(&"back\\slash", opts).unwrap();
-    assert!(yaml.contains('"'), "expected double-quoted: {yaml}");
+    assert!(yaml.starts_with('\''), "expected single-quoted: {yaml}");
 }
 
 #[test]
@@ -887,15 +887,15 @@ fn write_quoted_named_escapes_in_value() {
     let s = "x\u{0085}y";
     let yaml = to_string_with_options(&s, opts).unwrap();
     assert!(yaml.contains("\\N"), "expected \\N for NEL: {yaml}");
-    // LS \u{2028} -> \L, PS \u{2029} -> \P (combine with backslash to force double-quoting)
-    let s = "x\\\u{2028}y";
+    // LS \u{2028} -> \L, PS \u{2029} -> \P (combine with single quote to force double-quoting)
+    let s = "x'\u{2028}y";
     let yaml = to_string_with_options(&s, opts).unwrap();
     assert!(yaml.contains("\\L"), "expected \\L for LS: {yaml}");
-    let s = "x\\\u{2029}y";
+    let s = "x'\u{2029}y";
     let yaml = to_string_with_options(&s, opts).unwrap();
     assert!(yaml.contains("\\P"), "expected \\P for PS: {yaml}");
-    // BOM \u{FEFF} -> \uFEFF (combine with backslash to force double-quoting)
-    let s = "x\\\u{FEFF}y";
+    // BOM \u{FEFF} -> \uFEFF (combine with single quote to force double-quoting)
+    let s = "x'\u{FEFF}y";
     let yaml = to_string_with_options(&s, opts).unwrap();
     assert!(yaml.contains("\\uFEFF"), "expected \\uFEFF for BOM: {yaml}");
 }
