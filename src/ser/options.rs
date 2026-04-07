@@ -31,6 +31,18 @@ pub enum CommentPosition {
     Above,
 }
 
+/// Preferred quote style for string scalars when quoting is required.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum QuoteStyle {
+    /// Prefer single-quoted scalars.
+    ///
+    /// If a string contains control characters or a single quote, the serializer
+    /// falls back to double quotes so escapes can be represented correctly.
+    Single,
+    /// Prefer double-quoted scalars.
+    Double,
+}
+
 /// Serializer options for YAML emission.
 ///
 /// This struct controls various aspects of YAML serialization, such as indentation,
@@ -147,15 +159,26 @@ pub struct SerializerOptions {
     )]
     pub prefer_block_scalars: bool,
 
-    /// When enabled, quote all string scalars. Uses single quotes by default,
-    /// but switches to double quotes when the string contains escape sequences
-    /// (control characters like `\n`, `\t`, `\r`, backslash) or single quotes.
+    /// When enabled, quote all string scalars.
+    ///
+    /// The preferred quote style is controlled by [`Self::quote_style`].
+    /// With [`QuoteStyle::Single`], strings that contain escape sequences
+    /// (control characters like `\n`, `\t`, `\r`, backslash) or single quotes
+    /// are emitted with double quotes.
     /// Disables block scalar styles (`|` and `>`) for quoted strings when active.
     /// Off by default.
     #[deprecated(
         note = "Direct construction of `SerializerOptions` will be disabled from 1.0.0, use macro `ser_options!`"
     )]
     pub quote_all: bool,
+
+    /// Preferred quote style for string scalars whenever quoting is required.
+    ///
+    /// This applies when [`Self::quote_all`] is enabled or when plain style is
+    /// unsafe and the serializer auto-quotes a scalar.
+    ///
+    /// Default: [`QuoteStyle::Single`].
+    pub quote_style: QuoteStyle,
 
     /// Controls where [`crate::Commented`] comments are emitted in block style.
     ///
@@ -216,6 +239,7 @@ impl Default for SerializerOptions {
             empty_as_braces: true,
             prefer_block_scalars: true,
             quote_all: false,
+            quote_style: QuoteStyle::Single,
             comment_position: CommentPosition::Inline,
             yaml_12: false,
         }

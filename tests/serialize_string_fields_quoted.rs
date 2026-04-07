@@ -27,15 +27,15 @@ fn strings_that_look_special_are_quoted() -> Result<()> {
 
     // Each of these fields should be quoted or escaped so that they are preserved as strings
     // and do not get parsed as numbers, special floats, or mapping syntax.
-    assert!(out.contains("zero: \"0\""), "'0' must be quoted: {out}");
-    assert!(out.contains("xnan: \"nan\""), "'nan' must be quoted: {out}");
-    assert!(out.contains("\"# hi\""), "comment must be quoted: {out}");
+    assert!(out.contains("zero: '0'"), "'0' must be quoted: {out}");
+    assert!(out.contains("xnan: 'nan'"), "'nan' must be quoted: {out}");
+    assert!(out.contains("'# hi'"), "comment must be quoted: {out}");
     assert!(
-        out.contains("colon: \"a: b\""),
+        out.contains("colon: 'a: b'"),
         "'a: b' must be quoted: {out}"
     );
     assert!(
-        out.contains("ending_colon: \"hi:\""),
+        out.contains("ending_colon: 'hi:'"),
         "ending colon must be quoted: {out}"
     );
     assert!(

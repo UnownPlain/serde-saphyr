@@ -78,7 +78,7 @@ fn yaml12_disables_auto_quoting_of_yaml11_boolean_spellings_in_values() {
     )
     .unwrap();
     assert!(
-        out_default.contains("k: \"yes\""),
+        out_default.contains("k: 'yes'"),
         "default mode should quote YAML 1.1 boolean spellings in values: {out_default}"
     );
 
@@ -99,7 +99,7 @@ fn yaml12_disables_auto_quoting_of_yaml11_boolean_spellings_in_values() {
         "yaml_12 mode should not quote YAML 1.1 boolean spellings in values: {out_yaml12}"
     );
     assert!(
-        !out_yaml12.contains("k: \"yes\""),
+        !out_yaml12.contains("k: 'yes'"),
         "yaml_12 mode should not quote: {out_yaml12}"
     );
 }

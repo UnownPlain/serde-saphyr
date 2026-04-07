@@ -701,10 +701,11 @@ Serde-saphyr supports recursive structures, but Rust requires being very explici
 
 - Empty maps are serialized as {} and empty lists as [] by default.
 - Strings containing newlines, and very long strings are serialized as appropriate block scalars, except in cases where they would need escaping (like ending with `:`).
+- When a scalar must be quoted (outside `quote_all` mode), single quotes are preferred by default; control characters and single quotes use double-quoted style.
 - Indentation is configurable.
 - The wrapper [Commented](https://docs.rs/serde-saphyr/latest/serde_saphyr/struct.Commented.html) allows emitting a comment next to a scalar or reference (handy when the reference is far from its definition and needs explanation).
 - The wrapper [SpaceAfter](https://docs.rs/serde-saphyr/latest/serde_saphyr/struct.SpaceAfter.html) adds an empty line after the wrapped value, useful for visually separating sections in the output YAML.
-- It is possible to request that all strings be **quoted** — using single quotes when no escape sequences are present, and double quotes otherwise. This is very explicit and unambiguous, but such YAML may be less readable for humans. Line wrapping is disabled in this mode.
+- It is possible to request that all strings be **quoted**. By default this prefers single quotes, and falls back to double quotes for control characters, backslashes, or single quotes. Set `quote_style` to prefer double quotes instead. This is very explicit and unambiguous, but such YAML may be less readable for humans. Line wrapping is disabled in this mode.
 - YAML 1.1 booleans (`y`, `yes`, `on`, etc.) are normally quoted as both keys and values. If this is undesired (y is a coordinate), set `yaml_12` to true.
 
 These settings are changeable in [SerializerOptions](https://docs.rs/serde-saphyr/latest/serde_saphyr/options/struct.SerializerOptions.html).
