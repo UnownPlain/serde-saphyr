@@ -17,7 +17,7 @@ fn prefer_block_scalars_literal_newlines_and_trailing() {
     // Case 2: multiline with two trailing newlines => use |+ and keep one visible empty line
     let s2 = "a\nb\n\n".to_string();
     let out2 = serde_saphyr::to_string(&s2).unwrap();
-    let expected2 = "|+\n  a\n  b\n  \n";
+    let expected2 = "|+\n  a\n  b\n\n";
     assert_eq!(
         out2, expected2,
         "Unexpected YAML for 2 trailing newlines: {out2}"
@@ -28,7 +28,7 @@ fn prefer_block_scalars_literal_newlines_and_trailing() {
     // Case 3: multiline with four trailing newlines => use |+ and keep three visible empty lines
     let s3 = "a\nb\n\n\n\n".to_string();
     let out3 = serde_saphyr::to_string(&s3).unwrap();
-    let expected3 = "|+\n  a\n  b\n  \n  \n  \n";
+    let expected3 = "|+\n  a\n  b\n\n\n\n";
     assert_eq!(
         out3, expected3,
         "Unexpected YAML for 4 trailing newlines: {out3}"

@@ -1031,22 +1031,25 @@ impl<'a, 'b, W: Write> Serializer for &'a mut YamlSerializer<'b, W> {
 
                     if content.is_empty() {
                         if trailing_nl >= 1 {
-                            self.out.write_str(indent_str)?;
-                            self.at_line_start = false;
-                            // write a single empty content line
+                            // For an empty content line, avoid indent-only trailing spaces.
                             self.newline()?;
                         }
                     } else {
                         for line in content.split('\n') {
-                            self.out.write_str(indent_str)?;
-                            self.at_line_start = false;
-                            self.out.write_str(line)?;
-                            self.newline()?;
+                            if line.is_empty() {
+                                // Preserve empty lines without adding indent-only spaces.
+                                self.newline()?;
+                            } else {
+                                self.out.write_str(indent_str)?;
+                                self.at_line_start = false;
+                                self.out.write_str(line)?;
+                                self.newline()?;
+                            }
                         }
                         if trailing_nl >= 2 {
                             for _ in 0..(trailing_nl - 1) {
-                                self.out.write_str(indent_str)?;
-                                self.at_line_start = false;
+                                // Visual trailing empty lines for keep chomping (`|+`).
+                                // Emit pure blank lines to avoid extra trailing whitespace.
                                 self.newline()?;
                             }
                         }
