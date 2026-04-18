@@ -70,3 +70,33 @@ fn prefer_block_scalars_folded_for_long_single_line() {
     let back: String = serde_saphyr::from_str(&out).unwrap();
     assert_eq!(back, long);
 }
+
+#[test]
+fn prefer_block_scalars_literal_for_multiline_plain_unsafe_value() {
+    // Contains plain-unsafe tokens (`: ` and trailing `:`), but block scalar is still safe.
+    let s = "first line: value\nsecond line:".to_string();
+
+    let out = serde_saphyr::to_string(&s).unwrap();
+    assert!(
+        out.starts_with("|-\n  first line: value\n  second line:\n"),
+        "Expected literal block scalar for plain-unsafe multiline content, got:\n{out}"
+    );
+
+    let back: String = serde_saphyr::from_str(&out).unwrap();
+    assert_eq!(back, s);
+}
+
+#[test]
+fn prefer_block_scalars_folded_for_long_single_line_plain_unsafe_value() {
+    // Contains `: ` (plain-unsafe), and is long enough to trigger folded block style.
+    let s = format!("{}: {}", "alpha ".repeat(12), "omega ".repeat(6));
+
+    let out = serde_saphyr::to_string(&s).unwrap();
+    assert!(
+        out.starts_with(">-\n  "),
+        "Expected folded block scalar for long plain-unsafe single-line content, got:\n{out}"
+    );
+
+    let back: String = serde_saphyr::from_str(&out).unwrap();
+    assert_eq!(back, s);
+}

@@ -912,43 +912,31 @@ impl<'a, 'b, W: Write> Serializer for &'a mut YamlSerializer<'b, W> {
         // If no explicit style pending, auto-select block style.
         //
         // Controlled by `prefer_block_scalars`:
-        //  - multiline + long (by folded_wrap_col) → literal (|)
-        //  - otherwise, multiline → literal (|) only when newlines are the only reason plain
-        //    style is unsafe
+        //  - multiline values → literal (|)
         //  - single-line + long (by folded_wrap_col) → folded (>)
         //
+        // Block style is preferred here even when plain style would be unsafe (e.g. values
+        // containing ": " or ending with ':').
+        //
         // Also skip block scalars when quote_all is enabled - use quoted strings instead.
-        if self.pending_str_style.is_none() && self.in_flow == 0 && !self.quote_all {
-            use self::quoting::is_plain_value_safe;
+        if self.pending_str_style.is_none()
+            && self.in_flow == 0
+            && !self.quote_all
+            && self.prefer_block_scalars
+        {
+            // Keep quoted style for control bytes that block scalars cannot safely represent.
+            let block_safe = v
+                .chars()
+                .all(|ch| !ch.is_control() || ch == '\n' || ch == '\t');
 
-            if v.contains('\n') {
-                if self.prefer_block_scalars {
-                    // If it's already multiline and long, emit literal block style for readability.
-                    let char_len = v.chars().count();
-                    if char_len > self.folded_wrap_col {
-                        self.pending_str_style = Some(StrStyle::Literal);
-                        self.pending_str_from_auto = true;
-                    } else {
-                        // If removing newlines makes it plain-safe, then the only problem was
-                        // newlines → allow literal block style. Otherwise, don't auto-select block
-                        // style so that quoting logic handles it (e.g., values ending with ':').
-                        let trimmed = v.trim_end_matches('\n');
-                        let normalized = trimmed.replace('\n', " ");
-                        if is_plain_value_safe(&normalized, self.yaml_12, false) {
-                            self.pending_str_style = Some(StrStyle::Literal);
-                            self.pending_str_from_auto = true;
-                        }
-                    }
-                }
-            } else if self.prefer_block_scalars {
-                // Single-line string. If it needs quoting as a value, don't auto-fold.
-                let needs_quoting = !is_plain_value_safe(v, self.yaml_12, false);
-                if !needs_quoting {
+            if block_safe {
+                if v.contains('\n') {
+                    self.pending_str_style = Some(StrStyle::Literal);
+                    self.pending_str_from_auto = true;
+                } else if v.chars().count() > self.folded_wrap_col {
                     // Measure in characters, not bytes.
-                    if v.chars().count() > self.folded_wrap_col {
-                        self.pending_str_style = Some(StrStyle::Folded);
-                        self.pending_str_from_auto = true;
-                    }
+                    self.pending_str_style = Some(StrStyle::Folded);
+                    self.pending_str_from_auto = true;
                 }
             }
         }

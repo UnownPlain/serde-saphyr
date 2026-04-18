@@ -27,7 +27,7 @@ fn strings_that_look_special_are_quoted() -> Result<()> {
 
     let out = serde_saphyr::to_string(&v).expect("serialize");
 
-    // Each of these fields should be quoted or escaped so that they are preserved as strings
+    // Each of these fields should be rendered in a string-safe form so they are preserved
     // and do not get parsed as numbers, special floats, or mapping syntax.
     assert!(out.contains("zero: '0'"), "'0' must be quoted: {out}");
     assert!(out.contains("xnan: 'nan'"), "'nan' must be quoted: {out}");
@@ -45,8 +45,8 @@ fn strings_that_look_special_are_quoted() -> Result<()> {
         "ending colon must be quoted: {out}"
     );
     assert!(
-        out.contains("trim_ending_colon: \"hey:\\n\""),
-        "ending colon must be quoted: {out}"
+        out.contains("trim_ending_colon: |\n  hey:\n"),
+        "ending colon multiline value must use a safe scalar style: {out}"
     );
 
     let r = serde_saphyr::from_str(&out)?;
