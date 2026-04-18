@@ -722,29 +722,19 @@ impl<'a, 'b, W: Write> Serializer for &'a mut YamlSerializer<'b, W> {
         //  - single-line + long (by folded_wrap_col) → folded (>)
         //
         // Also skip block scalars when quote_all is enabled - use quoted strings instead.
-        if self.pending_str_style.is_none() && self.in_flow == 0 && !self.quote_all {
+        if self.pending_str_style.is_none()
+            && self.in_flow == 0
+            && !self.quote_all
+            && self.prefer_block_scalars
+            && is_block_scalar_content_safe(v)
+            && is_auto_block_scalar_readable(v)
+        {
             if v.contains('\n') {
-                if self.prefer_block_scalars
-                    && is_block_scalar_content_safe(v)
-                    && is_auto_block_scalar_readable(v)
-                {
-                    self.pending_str_style = Some(StrStyle::Literal);
-                    self.pending_str_from_auto = true;
-                }
-            } else if self.prefer_block_scalars {
-                // Single-line string. If it needs quoting as a value, don't auto-fold.
-                // Folded block scalars can preserve trailing ASCII spaces, unlike plain
-                // scalars, so ignore only those spaces for the eligibility probe.
-                let auto_fold_probe = v.trim_end_matches(' ');
-                let can_auto_fold = !auto_fold_probe.is_empty()
-                    && is_plain_value_safe(auto_fold_probe, self.yaml_12, false);
-                if can_auto_fold {
-                    // Measure in characters, not bytes.
-                    if v.chars().count() > self.folded_wrap_col {
-                        self.pending_str_style = Some(StrStyle::Folded);
-                        self.pending_str_from_auto = true;
-                    }
-                }
+                self.pending_str_style = Some(StrStyle::Literal);
+                self.pending_str_from_auto = true;
+            } else if v.chars().count() > self.folded_wrap_col {
+                self.pending_str_style = Some(StrStyle::Folded);
+                self.pending_str_from_auto = true;
             }
         }
         if let Some(style) = self.pending_str_style.take() {
