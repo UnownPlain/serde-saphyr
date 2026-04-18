@@ -195,7 +195,7 @@ fn is_yaml11_timestamp(mut s: &str) -> bool {
 }
 
 /// Whether implicit scalar resolution can change a string's type or reject it.
-fn is_ambiguous(s: &str, yaml_12: bool) -> bool {
+pub(crate) fn is_ambiguous(s: &str, yaml_12: bool) -> bool {
     s.is_empty()
         || s == "~"
         || s.eq_ignore_ascii_case("null")

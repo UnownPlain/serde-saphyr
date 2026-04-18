@@ -21,6 +21,9 @@ use std::collections::BTreeMap;
 #[case::sexagesimal_negative("-10:20")]
 #[case::sexagesimal_positive("+10:20")]
 #[case::sexagesimal_multiple_groups("190:20:30")]
+#[case::long_sexagesimal_float(
+    "0:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00.0"
+)]
 #[case::sexagesimal_overflow("18446744073709551616:59")]
 #[case::sexagesimal_float("10:20.5")]
 #[case::sexagesimal_float_underscore("1_0:20.5_0")]

@@ -21,7 +21,7 @@ use super::NAME_TUPLE_COMMENTED;
 use super::options::CommentPosition;
 use super::options::{QuoteStyle, SerializerOptions};
 use super::quoting::{
-    escape_double_quoted, is_auto_block_scalar_readable,
+    escape_double_quoted, is_ambiguous, is_auto_block_scalar_readable,
     is_block_scalar_content_safe, is_controll_which_needs_escaping, is_plain_value_safe,
 };
 use super::{
@@ -1343,29 +1343,15 @@ impl<'a, 'b, W: Write> Serializer for &'a mut YamlSerializer<'b, W> {
         if self.state.pending_str_style.is_none()
             && self.state.in_flow == 0
             && !self.settings.quote_all
+            && self.settings.prefer_block_scalars
+            && !is_ambiguous(v, self.settings.yaml_12)
+            && is_block_scalar_content_safe(v)
+            && is_auto_block_scalar_readable(v)
         {
             if v.contains('\n') {
-                if self.settings.prefer_block_scalars
-                    && is_block_scalar_content_safe(v)
-                    && is_auto_block_scalar_readable(v)
-                {
-                    self.state.pending_str_style =
-                        Some(PendingStrStyle::Automatic(StrStyle::Literal));
-                }
-            } else if self.settings.prefer_block_scalars {
-                // Single-line string. If it needs quoting as a value, don't auto-fold.
-                // Folded block scalars can preserve trailing ASCII spaces, unlike plain
-                // scalars, so ignore only those spaces for the eligibility probe.
-                let auto_fold_probe = v.trim_end_matches(' ');
-                let can_auto_fold = !auto_fold_probe.is_empty()
-                    && is_plain_value_safe(auto_fold_probe, self.settings.yaml_12, false);
-                if can_auto_fold {
-                    // Measure in characters, not bytes.
-                    if v.chars().count() > self.settings.folded_wrap_col {
-                        self.state.pending_str_style =
-                            Some(PendingStrStyle::Automatic(StrStyle::Folded));
-                    }
-                }
+                self.state.pending_str_style = Some(PendingStrStyle::Automatic(StrStyle::Literal));
+            } else if v.chars().count() > self.settings.folded_wrap_col {
+                self.state.pending_str_style = Some(PendingStrStyle::Automatic(StrStyle::Folded));
             }
         }
         if let Some(pending_style) = self.state.pending_str_style.take() {
