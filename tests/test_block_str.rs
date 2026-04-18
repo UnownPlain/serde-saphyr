@@ -76,7 +76,7 @@ fn litstr_only_newline() {
 
     // One empty content line, clip chomping.
     // Value: "\n"
-    assert_eq!(out, "note: |\n  \nother: 0\n");
+    assert_eq!(out, "note: |\n\nother: 0\n");
 }
 
 #[test]
@@ -133,7 +133,7 @@ fn litstr_two_trailing_newlines() {
 
     // Content lines: "a", "b", "" plus keep chomping.
     // Value: "a\nb\n\n"
-    assert_eq!(out, "note: |+\n  a\n  b\n  \nother: 0\n");
+    assert_eq!(out, "note: |+\n  a\n  b\n\nother: 0\n");
 }
 
 #[test]
@@ -152,7 +152,7 @@ fn litstr_inner_blank_line_and_trailing_newline() {
 
     // Inner blank line must be preserved as content; one trailing '\n'.
     // Value: "a\n\nb\n"
-    assert_eq!(out, "note: |\n  a\n  \n  b\nother: 0\n");
+    assert_eq!(out, "note: |\n  a\n\n  b\nother: 0\n");
 }
 
 #[test]
